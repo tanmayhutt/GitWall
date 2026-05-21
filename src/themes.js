@@ -1,10 +1,10 @@
 const THEMES = {
   classic: {
     name: "Classic",
-    background: "#0d1117",
-    empty: "#161b22",
-    levels: ["#0e4429", "#006d32", "#26a641", "#39d353"],
-    text: "#c9d1d9",
+    background: "#0C1116",
+    empty: "#161C23",
+    levels: ["#023A16", "#196E2D", "#2CA044", "#2CA044"],
+    text: "#ffffff",
     subtext: "#8b949e",
   },
   light: {

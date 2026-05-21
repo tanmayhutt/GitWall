@@ -27,7 +27,7 @@ import {
 } from "lucide-react";
 
 const themes = [
-  { id: "classic", name: "Classic", colors: ["#0e4429", "#006d32", "#26a641", "#39d353"], background: "#0d1117" },
+  { id: "classic", name: "Classic", colors: ["#023A16", "#196E2D", "#2CA044", "#39d353"], background: "#0C1116" },
   { id: "light", name: "Light", colors: ["#9be9a8", "#40c463", "#30a14e", "#216e39"], background: "#ffffff" },
   { id: "dracula", name: "Dracula", colors: ["#6272a4", "#bd93f9", "#ff79c6", "#50fa7b"], background: "#282a36" },
   { id: "nord", name: "Nord", colors: ["#5e81ac", "#81a1c1", "#88c0d0", "#8fbcbb"], background: "#2e3440" },
