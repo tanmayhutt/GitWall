@@ -1,30 +1,13 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Copy,
-  Download,
-  Loader2,
-  ChevronDown,
-  Smartphone,
-} from "lucide-react";
+import { Plus_Jakarta_Sans } from "next/font/google";
+import { Download, Loader2, ChevronRight, Smartphone } from "lucide-react";
+
+const jakarta = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+});
 
 const themes = [
   { id: "classic", name: "Classic", colors: ["#023A16", "#196E2D", "#2CA044", "#39d353"], background: "#0C1116" },
@@ -51,7 +34,7 @@ const devices = [
 const steps = [
   { title: "Generate", desc: "Pick theme & device, then generate." },
   { title: "Copy URL", desc: "Copy the Shortcut URL below." },
-  { title: "iOS Shortcut", desc: "\"Get Contents of URL\" action." },
+  { title: "iOS Shortcut", desc: '"Get Contents of URL" action.' },
   { title: "Automate", desc: "Daily trigger sets wallpaper." },
 ];
 
@@ -92,20 +75,12 @@ export default function Home() {
       setError("Please enter a GitHub username.");
       return;
     }
-
     setError(null);
     setLoading(true);
     setPreviewSrc(null);
-
-    const params = new URLSearchParams({
-      user,
-      theme: selectedTheme,
-      stats: showStats,
-    });
-
+    const params = new URLSearchParams({ user, theme: selectedTheme, stats: showStats });
     const previewUrl = `/api/preview?${params}`;
     const fullUrl = `${window.location.origin}/api/wallpaper?${params}&device=${device}`;
-
     try {
       const res = await fetch(previewUrl);
       if (!res.ok) {
@@ -116,8 +91,7 @@ export default function Home() {
       setPreviewSrc(URL.createObjectURL(blob));
       setWallpaperUrl(fullUrl);
     } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : "Something went wrong";
+      const message = err instanceof Error ? err.message : "Something went wrong";
       setError(message);
     } finally {
       setLoading(false);
@@ -142,130 +116,129 @@ export default function Home() {
   }, [wallpaperUrl, username]);
 
   return (
-    <div className="mx-auto max-w-[1100px] px-5 py-10">
-      {/* Hero */}
-      <header className="mb-10 text-center">
-        <h1 className="mb-2 text-4xl font-bold tracking-tight bg-gradient-to-br from-green-400 to-cyan-400 bg-clip-text text-transparent">
-          GitWall
-        </h1>
-        <p className="text-muted-foreground text-lg">
-          Turn your GitHub contributions into an iPhone wallpaper
-        </p>
-      </header>
+    <div className={`min-h-screen bg-[#0a0a0a] text-white ${jakarta.className}`}>
 
-      {/* Two-column split view */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-8 mb-10">
-        {/* LEFT — Workspace */}
-        <div className="space-y-5">
-          {/* Card 1: Account */}
-          <Card>
-            <CardContent>
-              <div className="flex gap-3 items-end">
-                <div className="flex-1">
-                  <Label htmlFor="username" className="mb-2">
-                    GitHub Username
-                  </Label>
-                  <Input
-                    id="username"
-                    placeholder="e.g. torvalds"
-                    autoComplete="off"
-                    spellCheck={false}
-                    className="h-10"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && generate()}
-                  />
-                </div>
-                <Button
+      {/* Top nav */}
+      <nav className="flex items-center justify-center h-14 border-b border-white/[0.06]">
+        <span className="text-sm font-medium text-white/60 tracking-wide">GitWall</span>
+      </nav>
+
+      <div className="mx-auto max-w-[1060px] px-6">
+
+        {/* Hero */}
+        <header className="pt-16 pb-14 border-b border-white/[0.06]">
+          <h1 className="text-[52px] lg:text-[64px] font-extrabold leading-[1.05] tracking-[-0.03em] mb-5 max-w-2xl">
+            GitHub contributions as your wallpaper.
+          </h1>
+          <p className="text-[15px] text-white/40 font-normal leading-relaxed">
+            Generate iPhone wallpapers from your contribution graph.<br />
+            Updates automatically on your lock screen.
+          </p>
+        </header>
+
+        {/* Main grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_260px] gap-14 py-12">
+
+          {/* LEFT: Form */}
+          <div className="space-y-10">
+
+            {/* Username */}
+            <div>
+              <label className="block text-[11px] font-semibold text-white/35 uppercase tracking-widest mb-3">
+                GitHub Username
+              </label>
+              <div className="flex gap-2.5">
+                <input
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && generate()}
+                  placeholder="e.g. torvalds"
+                  autoComplete="off"
+                  spellCheck={false}
+                  className="flex-1 bg-white/[0.04] border border-white/[0.08] rounded-lg px-4 py-3 text-[15px] text-white placeholder:text-white/20 focus:outline-none focus:border-white/25 transition-colors"
+                />
+                <button
                   onClick={generate}
                   disabled={loading}
-                  className="h-10 px-6 bg-cyan-600 hover:bg-cyan-700 text-white"
+                  className="px-6 py-3 bg-white text-black text-[13px] font-bold rounded-lg hover:bg-white/90 transition-colors disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-2 whitespace-nowrap"
                 >
-                  {loading ? (
-                    <Loader2 className="size-4 animate-spin" />
-                  ) : (
-                    "Generate"
-                  )}
-                </Button>
+                  {loading ? <Loader2 className="size-4 animate-spin" /> : "Generate →"}
+                </button>
               </div>
               {error && (
-                <p className="text-destructive text-sm mt-2">{error}</p>
+                <p className="text-red-400/80 text-[13px] mt-2.5 font-medium">{error}</p>
               )}
-            </CardContent>
-          </Card>
+            </div>
 
-          {/* Card 2: Appearance */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">Appearance</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Device + Stats row */}
-              <div className="flex gap-3">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Label>Device</Label>
-                    {autoDetected && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-cyan-600/20 text-cyan-400 font-medium">
-                        auto-detected
-                      </span>
-                    )}
-                  </div>
-                  <Select value={device} onValueChange={setDevice}>
-                    <SelectTrigger className="w-full h-10">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
+            {/* Appearance */}
+            <div className="pt-8 border-t border-white/[0.06]">
+              <p className="text-[11px] font-semibold text-white/35 uppercase tracking-widest mb-6">
+                Appearance
+              </p>
+
+              <div className="grid grid-cols-2 gap-4 mb-7">
+                <div>
+                  <label className="block text-[11px] font-semibold text-white/35 uppercase tracking-widest mb-2.5">
+                    Device{autoDetected && <span className="text-white/25 normal-case tracking-normal font-normal ml-1.5">· auto-detected</span>}
+                  </label>
+                  <div className="relative">
+                    <select
+                      value={device}
+                      onChange={(e) => setDevice(e.target.value)}
+                      className="w-full bg-white/[0.04] border border-white/[0.08] rounded-lg px-3.5 py-2.5 text-[13px] text-white focus:outline-none focus:border-white/25 transition-colors cursor-pointer appearance-none font-medium"
+                    >
                       {devices.map((d) => (
-                        <SelectItem key={d.id} value={d.id}>
+                        <option key={d.id} value={d.id} className="bg-[#111] text-white">
                           {d.name}
-                        </SelectItem>
+                        </option>
                       ))}
-                    </SelectContent>
-                  </Select>
+                    </select>
+                    <span className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-white/30 text-[10px]">▾</span>
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <Label className="mb-2">Show Stats</Label>
-                  <Select value={showStats} onValueChange={setShowStats}>
-                    <SelectTrigger className="w-full h-10">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="true">Yes</SelectItem>
-                      <SelectItem value="false">No</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <div>
+                  <label className="block text-[11px] font-semibold text-white/35 uppercase tracking-widest mb-2.5">
+                    Show Stats
+                  </label>
+                  <div className="relative">
+                    <select
+                      value={showStats}
+                      onChange={(e) => setShowStats(e.target.value)}
+                      className="w-full bg-white/[0.04] border border-white/[0.08] rounded-lg px-3.5 py-2.5 text-[13px] text-white focus:outline-none focus:border-white/25 transition-colors cursor-pointer appearance-none font-medium"
+                    >
+                      <option value="true" className="bg-[#111]">Yes</option>
+                      <option value="false" className="bg-[#111]">No</option>
+                    </select>
+                    <span className="absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-white/30 text-[10px]">▾</span>
+                  </div>
                 </div>
               </div>
 
-              {/* Theme Swatches */}
+              {/* Theme */}
               <div>
-                <Label className="mb-2">Theme</Label>
-                <div className="grid grid-cols-[repeat(auto-fill,minmax(85px,1fr))] gap-2">
+                <label className="block text-[11px] font-semibold text-white/35 uppercase tracking-widest mb-3">
+                  Theme
+                </label>
+                <div className="flex flex-wrap gap-2">
                   {themes.map((t) => (
                     <button
                       key={t.id}
                       onClick={() => setSelectedTheme(t.id)}
-                      className={`rounded-lg p-2.5 text-center text-xs transition-all cursor-pointer border-2 ${
+                      className={`px-3.5 py-2.5 rounded-lg border transition-all cursor-pointer ${
                         selectedTheme === t.id
-                          ? "border-cyan-500 ring-1 ring-cyan-500/30"
-                          : "border-transparent hover:border-border"
+                          ? "border-white/50 ring-1 ring-white/10"
+                          : "border-white/[0.07] hover:border-white/20"
                       }`}
-                      style={{ background: t.background }}
+                      style={{ background: t.background === "#ffffff" ? "#f8f8f8" : t.background }}
                     >
-                      <div className="flex justify-center gap-1 mb-1.5">
+                      <div className="flex gap-1 justify-center mb-1.5">
                         {t.colors.map((c, i) => (
-                          <span
-                            key={i}
-                            className="size-3 rounded-sm"
-                            style={{ background: c }}
-                          />
+                          <span key={i} className="w-2 h-2 rounded-full" style={{ background: c }} />
                         ))}
                       </div>
                       <span
-                        style={{
-                          color: t.id === "light" ? "#24292f" : "#c9d1d9",
-                        }}
+                        className="text-[10px] font-semibold uppercase tracking-wider block text-center"
+                        style={{ color: t.id === "light" ? "#1a1a1a" : "rgba(255,255,255,0.6)" }}
                       >
                         {t.name}
                       </span>
@@ -273,127 +246,108 @@ export default function Home() {
                   ))}
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
 
-          {/* Card 3: Export & Automate */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">Export & Automate</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Download CTA */}
-              <Button
+            {/* Export */}
+            <div className="pt-8 border-t border-white/[0.06]">
+              <p className="text-[11px] font-semibold text-white/35 uppercase tracking-widest mb-5">
+                Export & Automate
+              </p>
+
+              <button
                 onClick={handleDownload}
                 disabled={!wallpaperUrl}
-                className="w-full h-10 bg-cyan-600 hover:bg-cyan-700 text-white"
+                className="w-full py-3.5 bg-white text-black text-[13px] font-bold rounded-lg hover:bg-white/90 transition-colors disabled:opacity-20 disabled:cursor-not-allowed mb-5 flex items-center justify-center gap-2"
               >
-                <Download className="size-4" />
+                <Download className="size-3.5" />
                 Download PNG
-              </Button>
+              </button>
 
-              {/* Shortcut URL */}
-              <div className="space-y-2">
-                <CardDescription className="text-xs">
-                  iOS Shortcut URL for auto-updating wallpaper
-                </CardDescription>
+              <div className="mb-6">
+                <label className="block text-[11px] font-semibold text-white/35 uppercase tracking-widest mb-2.5">
+                  iOS Shortcut URL
+                </label>
                 <div className="flex gap-2">
-                  <Input
+                  <input
                     readOnly
                     value={wallpaperUrl || ""}
                     placeholder="Generate a wallpaper first..."
-                    className="h-10 font-mono text-xs text-green-400 flex-1"
                     onClick={(e) => (e.target as HTMLInputElement).select()}
+                    className="flex-1 bg-white/[0.04] border border-white/[0.08] rounded-lg px-3.5 py-2.5 text-[12px] text-emerald-400/80 placeholder:text-white/15 focus:outline-none font-mono"
                   />
-                  <Button
-                    variant="outline"
+                  <button
                     onClick={handleCopy}
                     disabled={!wallpaperUrl}
-                    className="h-10 shrink-0"
+                    className="border border-white/[0.12] rounded-lg px-5 text-[13px] font-semibold text-white/50 hover:text-white hover:border-white/30 transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
                   >
-                    <Copy className="size-4" />
-                    {copied ? "Copied!" : "Copy"}
-                  </Button>
+                    {copied ? "✓" : "Copy"}
+                  </button>
                 </div>
               </div>
 
-              {/* Collapsible guide */}
               <button
                 onClick={() => setShowGuide(!showGuide)}
-                className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors w-full cursor-pointer"
+                className="flex items-center gap-1.5 text-[12px] font-medium text-white/25 hover:text-white/50 transition-colors"
               >
-                <ChevronDown
-                  className={`size-3.5 transition-transform ${
-                    showGuide ? "rotate-180" : ""
-                  }`}
-                />
+                <ChevronRight className={`size-3 transition-transform ${showGuide ? "rotate-90" : ""}`} />
                 How do I automate this?
               </button>
 
               {showGuide && (
-                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 pt-1">
+                <div className="grid grid-cols-2 lg:grid-cols-4 mt-4 border border-white/[0.07] rounded-lg overflow-hidden">
                   {steps.map((step, i) => (
                     <div
                       key={i}
-                      className="text-center space-y-1.5 p-3 rounded-lg bg-muted/50"
+                      className={`p-4 bg-white/[0.02] ${i < steps.length - 1 ? "border-r border-white/[0.06]" : ""}`}
                     >
-                      <div className="mx-auto flex size-7 items-center justify-center rounded-full bg-cyan-600 text-white text-xs font-bold">
-                        {i + 1}
-                      </div>
-                      <h4 className="text-xs font-medium">{step.title}</h4>
-                      <p className="text-[11px] text-muted-foreground leading-snug">
-                        {step.desc}
-                      </p>
+                      <div className="text-[10px] font-semibold text-white/20 mb-2">{String(i + 1).padStart(2, "0")}</div>
+                      <div className="text-[13px] font-semibold text-white mb-1">{step.title}</div>
+                      <div className="text-[11px] text-white/35 leading-relaxed font-normal">{step.desc}</div>
                     </div>
                   ))}
                 </div>
               )}
-            </CardContent>
-          </Card>
-        </div>
+            </div>
+          </div>
 
-        {/* RIGHT — Sticky Phone Preview */}
-        <div className="flex justify-center lg:sticky lg:top-8 lg:self-start">
-          <div className="w-[260px] h-[562px] rounded-[2.5rem] overflow-hidden border-[3px] border-border bg-[#0d1117] relative shadow-2xl shadow-black/40">
-            {/* Notch */}
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[90px] h-[28px] bg-black rounded-b-2xl z-10" />
+          {/* RIGHT: Phone Preview */}
+          <div className="flex justify-center lg:sticky lg:top-8 lg:self-start">
+            <div className="w-[240px] h-[520px] border border-white/[0.1] bg-[#0d1117] relative overflow-hidden rounded-[2.2rem] shadow-2xl shadow-black/60">
+              <div className="absolute top-3 left-1/2 -translate-x-1/2 w-[72px] h-[20px] bg-black rounded-full z-10" />
 
-            {loading && (
-              <div className="absolute inset-0 flex items-center justify-center text-muted-foreground">
-                <Loader2 className="size-8 animate-spin" />
-              </div>
-            )}
-            {!loading && !previewSrc && (
-              <div className="flex flex-col items-center justify-center h-full text-muted-foreground px-8 gap-4">
-                <Smartphone className="size-10 opacity-30" />
-                <p className="text-sm text-center opacity-60">
-                  Enter your GitHub username and click Generate
-                </p>
-              </div>
-            )}
-            {previewSrc && (
-              <img
-                src={previewSrc}
-                alt="Wallpaper preview"
-                className="w-full h-full object-cover"
-              />
-            )}
+              {loading && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Loader2 className="size-5 animate-spin text-white/20" />
+                </div>
+              )}
+              {!loading && !previewSrc && (
+                <div className="flex flex-col items-center justify-center h-full gap-3 px-8">
+                  <Smartphone className="size-7 text-white/10" />
+                  <p className="text-[11px] font-medium text-white/20 text-center leading-relaxed">
+                    Enter your username and generate
+                  </p>
+                </div>
+              )}
+              {previewSrc && (
+                <img src={previewSrc} alt="Wallpaper preview" className="w-full h-full object-cover" />
+              )}
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Footer */}
-      <footer className="text-center py-8 text-muted-foreground text-xs">
-        <p>
-          GitWall &mdash; open source on{" "}
-          <a
-            href="https://github.com/sxivansx/GitWall"
-            className="text-cyan-400 hover:underline"
-          >
-            GitHub
-          </a>
-        </p>
-      </footer>
+        {/* Footer */}
+        <footer className="py-8 border-t border-white/[0.06]">
+          <p className="text-[12px] font-medium text-white/20">
+            GitWall — open source on{" "}
+            <a
+              href="https://github.com/sxivansx/GitWall"
+              className="text-white/35 hover:text-white/60 transition-colors underline underline-offset-2"
+            >
+              GitHub
+            </a>
+          </p>
+        </footer>
+      </div>
     </div>
   );
 }
