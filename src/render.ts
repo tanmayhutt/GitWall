@@ -3,6 +3,7 @@ import path from "path";
 import { getTheme } from "./themes";
 import { getDevice } from "./devices";
 import { getContributionLevel, calculateStreak } from "./lib/contributions";
+import { drawMinecraftCell } from "./lib/minecraft";
 import type { ContributionCalendar } from "./github";
 
 const fontsDir = path.join(process.cwd(), "fonts");
@@ -97,16 +98,26 @@ export function renderWallpaper(
   // Show the most recent N days
   const recentDays = allDays.slice(-totalCells);
 
-  // Draw cells
+  // Draw cells. Minecraft themes draw pixel-art blocks; everything else draws a
+  // solid box/circle. Pixel art needs antialiasing off so block edges stay
+  // crisp — it's restored before the text below.
+  const isMinecraft = theme.style === "minecraft";
+  if (isMinecraft) ctx.antialias = "none";
   for (let i = 0; i < recentDays.length; i++) {
     const col = i % numCols;
     const row = Math.floor(i / numCols);
     const x = gridLeft + col * cellStep;
     const y = gridTop + row * cellStep;
     const level = getContributionLevel(recentDays[i].contributionCount);
-    ctx.fillStyle = level === -1 ? theme.empty : theme.levels[level];
-    drawCell(ctx, x, y, cellSize, cornerRadius, shape);
+    if (isMinecraft) {
+      // Vary the noise seed by position so neighbouring blocks aren't identical.
+      drawMinecraftCell(ctx, x, y, cellSize, level, theme.variant!, (col + row * 3) % 8);
+    } else {
+      ctx.fillStyle = level === -1 ? theme.empty : theme.levels[level];
+      drawCell(ctx, x, y, cellSize, cornerRadius, shape);
+    }
   }
+  if (isMinecraft) ctx.antialias = "subpixel";
 
   // Bottom text — minimal, centered
   const gridBottom = gridTop + numRows * cellStep - cellGap;
