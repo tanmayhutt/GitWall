@@ -87,17 +87,48 @@ export async function fetchContributions(
   if (res.status === 401) {
     throw new GitHubError("GitHub token is invalid or expired", 500);
   }
+
   if (res.status === 403 || res.status === 429) {
-    throw new GitHubError("GitHub API rate limit exceeded, try again later", 429);
+    // A real rate-limit is signalled by an exhausted quota header (or a 429).
+    // GitHub also returns 403 for other reasons (missing token scope, abuse
+    // detection, blocked IP) — those need a different message, not "try again".
+    const remaining = res.headers.get("x-ratelimit-remaining");
+    if (res.status === 429 || remaining === "0") {
+      throw new GitHubError(
+        "GitHub API rate limit exceeded, try again later",
+        429
+      );
+    }
+    let message =
+      "GitHub denied the request — check that the token has the read:user scope";
+    try {
+      const body = await res.json();
+      if (body?.message) message = body.message;
+    } catch {
+      /* keep the default message if the 403 body is not JSON */
+    }
+    throw new GitHubError(message, 403);
   }
 
-  const json = await res.json();
+  // GitHub can return a non-JSON body (HTML gateway/error page during an
+  // outage). Guard the parse so it surfaces as a clear upstream error rather
+  // than an opaque "Unexpected token <" 500.
+  let json;
+  try {
+    json = await res.json();
+  } catch {
+    throw new GitHubError(
+      `GitHub returned an unexpected response (HTTP ${res.status})`,
+      502
+    );
+  }
 
   if (json.errors?.length) {
     const first = json.errors[0];
-    // GitHub reports an unknown login as a NOT_FOUND GraphQL error rather than
-    // a null user, so surface it as a 404 instead of a generic upstream error.
-    if (first.type === "NOT_FOUND") {
+    // An unknown/suspended login comes back as a GraphQL error. GitHub usually
+    // tags it NOT_FOUND, but also match the message text so a plain typo always
+    // surfaces as a 404 rather than a generic upstream error.
+    if (first.type === "NOT_FOUND" || /could not resolve to a user/i.test(first.message ?? "")) {
       throw new GitHubError(`User "${username}" not found`, 404);
     }
     throw new GitHubError(first.message, 502);
