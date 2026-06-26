@@ -4,6 +4,10 @@ import { useState, useCallback, useEffect, useRef, type ReactNode } from "react"
 import { Download, Loader2, Smartphone, Square, Circle, Search, X, Copy, Check } from "lucide-react";
 import { DEVICES, ANDROID_DEVICES, type AndroidDevice } from "@/devices";
 import { THEMES } from "@/themes";
+import { MINECRAFT_THUMBS } from "@/lib/minecraftThumbs";
+
+const MINECRAFT_DEFAULT = "minecraft-slime";
+const isMinecraftId = (id: string) => id.startsWith("minecraft-");
 
 type Theme = { id: string; name: string; colors: string[]; background: string };
 type Device = { id: string; name: string };
@@ -331,6 +335,13 @@ export default function Home() {
   const hasGenerated = generatedKey !== null;
   const isDirty = hasGenerated && currentKey !== generatedKey;
 
+  // The Minecraft styles are grouped under one picker tile that reveals its four
+  // block variants; everything else stays in the flat theme grid.
+  const gridThemes = themes.filter((t) => !isMinecraftId(t.id));
+  const minecraftThemes = themes.filter((t) => isMinecraftId(t.id));
+  const minecraftSelected = isMinecraftId(selectedTheme);
+  const minecraftGroup = minecraftThemes.find((t) => t.id === MINECRAFT_DEFAULT) ?? minecraftThemes[0];
+
   const iphoneGuide = (
     <div className="space-y-3">
       <StepCard num="1" title="Generate">
@@ -586,33 +597,35 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Shape */}
-              <div className="mb-7">
-                <label className="block text-[11px] font-semibold text-white/35 uppercase tracking-widest mb-2.5">
-                  Shape
-                </label>
-                <div className="inline-flex gap-1 p-1 bg-white/[0.04] border border-white/[0.08] rounded-lg">
-                  {[
-                    { id: "box", name: "Box", Icon: Square },
-                    { id: "circle", name: "Circular", Icon: Circle },
-                  ].map(({ id, name, Icon }) => (
-                    <button
-                      key={id}
-                      onClick={() => setShape(id)}
-                      aria-pressed={shape === id}
-                      aria-label={`${name} cells`}
-                      className={`flex items-center gap-1.5 px-4 py-2 rounded-md text-[12px] font-semibold transition-colors cursor-pointer ${
-                        shape === id
-                          ? "bg-white text-black"
-                          : "text-white/50 hover:text-white"
-                      }`}
-                    >
-                      <Icon className="size-3.5" />
-                      {name}
-                    </button>
-                  ))}
+              {/* Shape — not applicable to Minecraft block cells */}
+              {!minecraftSelected && (
+                <div className="mb-7">
+                  <label className="block text-[11px] font-semibold text-white/35 uppercase tracking-widest mb-2.5">
+                    Shape
+                  </label>
+                  <div className="inline-flex gap-1 p-1 bg-white/[0.04] border border-white/[0.08] rounded-lg">
+                    {[
+                      { id: "box", name: "Box", Icon: Square },
+                      { id: "circle", name: "Circular", Icon: Circle },
+                    ].map(({ id, name, Icon }) => (
+                      <button
+                        key={id}
+                        onClick={() => setShape(id)}
+                        aria-pressed={shape === id}
+                        aria-label={`${name} cells`}
+                        className={`flex items-center gap-1.5 px-4 py-2 rounded-md text-[12px] font-semibold transition-colors cursor-pointer ${
+                          shape === id
+                            ? "bg-white text-black"
+                            : "text-white/50 hover:text-white"
+                        }`}
+                      >
+                        <Icon className="size-3.5" />
+                        {name}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Theme */}
               <div>
@@ -620,7 +633,7 @@ export default function Home() {
                   Theme
                 </label>
                 <div className="flex flex-wrap gap-2">
-                  {themes.map((t) => (
+                  {gridThemes.map((t) => (
                     <button
                       key={t.id}
                       onClick={() => setSelectedTheme(t.id)}
@@ -646,7 +659,72 @@ export default function Home() {
                       </span>
                     </button>
                   ))}
+
+                  {/* Minecraft group — opens the block-style sub-options below */}
+                  {minecraftGroup && (
+                    <button
+                      onClick={() => { if (!minecraftSelected) setSelectedTheme(MINECRAFT_DEFAULT); }}
+                      aria-pressed={minecraftSelected}
+                      aria-label="Minecraft themes"
+                      className={`px-3.5 py-2.5 rounded-lg border transition-all cursor-pointer ${
+                        minecraftSelected
+                          ? "border-white/50 ring-1 ring-white/10"
+                          : "border-white/[0.07] hover:border-white/20"
+                      }`}
+                      style={{ background: minecraftGroup.background }}
+                    >
+                      <div className="flex gap-1 justify-center mb-1.5">
+                        {minecraftGroup.colors.map((c, i) => (
+                          <span key={i} className="w-2 h-2" style={{ background: c }} />
+                        ))}
+                      </div>
+                      <span className="text-[10px] font-semibold uppercase tracking-wider block text-center text-white/60">
+                        Minecraft
+                      </span>
+                    </button>
+                  )}
                 </div>
+
+                {/* Minecraft block variants */}
+                {minecraftSelected && minecraftThemes.length > 0 && (
+                  <div className="mt-3 p-3 rounded-xl border border-white/[0.07] bg-white/[0.02]">
+                    <p className="text-[11px] font-semibold text-white/35 uppercase tracking-widest mb-3">
+                      Minecraft block
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {minecraftThemes.map((t) => {
+                        const variant = t.id.replace("minecraft-", "");
+                        const active = selectedTheme === t.id;
+                        return (
+                          <button
+                            key={t.id}
+                            onClick={() => setSelectedTheme(t.id)}
+                            aria-pressed={active}
+                            aria-label={`${t.name} block`}
+                            className={`flex items-center gap-2.5 pl-1.5 pr-3.5 py-1.5 rounded-lg border transition-all cursor-pointer ${
+                              active
+                                ? "border-white/50 ring-1 ring-white/10 bg-white/[0.04]"
+                                : "border-white/[0.07] hover:border-white/20"
+                            }`}
+                          >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={MINECRAFT_THUMBS[variant]}
+                              alt=""
+                              width={28}
+                              height={28}
+                              className="w-7 h-7 rounded-[3px]"
+                              style={{ imageRendering: "pixelated" }}
+                            />
+                            <span className={`text-[12px] font-semibold ${active ? "text-white" : "text-white/55"}`}>
+                              {t.name}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Generate / Regenerate — below the theme picker */}
