@@ -1,4 +1,4 @@
-import type { ContributionWeek } from "@/github";
+import type { ContributionDay, ContributionWeek } from "@/github";
 
 export function getContributionLevel(count: number): number {
   if (count === 0) return -1;
@@ -8,28 +8,37 @@ export function getContributionLevel(count: number): number {
   return 3;
 }
 
-export function calculateStreak(weeks: ContributionWeek[]): number {
-  const allDays = [];
-  for (let w = weeks.length - 1; w >= 0; w--) {
-    const days = weeks[w].contributionDays;
-    for (let d = days.length - 1; d >= 0; d--) {
-      allDays.push(days[d]);
+function todayISO(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+// `today` is injectable so the result is deterministic in tests; it defaults to
+// the current UTC date.
+export function calculateStreak(
+  weeks: ContributionWeek[],
+  today: string = todayISO()
+): number {
+  const allDays: ContributionDay[] = [];
+  for (const week of weeks) {
+    for (const day of week.contributionDays) {
+      allDays.push(day);
     }
   }
 
-  // The most recent day may be "today" with no contributions yet; skipping a
-  // single trailing zero keeps an active streak from resetting before midnight.
-  let start = 0;
-  if (allDays.length > 0 && allDays[0].contributionCount === 0) {
-    start = 1;
-  }
-
+  // GitHub returns whole calendar weeks, so the most recent week is padded with
+  // future-dated zero days (and today may also be zero before the first commit
+  // lands). Walk newest → oldest: skip anything dated today or later, then count
+  // consecutive contributing days. A *past* zero day ends the streak.
   let streak = 0;
-  for (let i = start; i < allDays.length; i++) {
-    if (allDays[i].contributionCount > 0) {
+  for (let i = allDays.length - 1; i >= 0; i--) {
+    const { date, contributionCount } = allDays[i];
+    if (date > today) continue; // future padding day
+    if (contributionCount > 0) {
       streak++;
+    } else if (date === today) {
+      continue; // today, not committed yet — don't break the streak
     } else {
-      break;
+      break; // a past day with no contributions ends the streak
     }
   }
   return streak;

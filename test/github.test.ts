@@ -1,10 +1,9 @@
-import { test } from "node:test";
-import assert from "node:assert/strict";
-import { isValidUsername } from "../src/github.ts";
+import { test, expect } from "bun:test";
+import { isValidUsername } from "../src/github";
 
 test("accepts valid GitHub usernames", () => {
   for (const name of ["torvalds", "a", "a-b", "github-user", "user123", "a".repeat(39)]) {
-    assert.equal(isValidUsername(name), true, name);
+    expect(isValidUsername(name)).toBe(true);
   }
 });
 
@@ -19,6 +18,6 @@ test("rejects invalid GitHub usernames", () => {
     "a b",
     "a".repeat(40),
   ]) {
-    assert.equal(isValidUsername(name), false, name);
+    expect(isValidUsername(name)).toBe(false);
   }
 });
