@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { fetchContributions, GitHubError } from "@/github";
-import { renderWallpaper } from "@/render";
-import { getCached, setCache } from "@/lib/cache";
+import { buildWallpaperResponse } from "@/lib/wallpaperResponse";
+
+// Upper bound on a custom (Android) canvas edge. The largest real device is
+// 1440×3216; 4096 leaves generous headroom while preventing a single crafted
+// URL from requesting a multi-gigabyte allocation that would OOM the host.
+const MAX_DIMENSION = 4096;
 
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
@@ -12,8 +15,8 @@ export async function GET(request: NextRequest) {
   const shape = searchParams.get("shape") === "circle" ? "circle" : "box";
 
   // Custom width/height override (for Android devices)
-  const customWidth = searchParams.get("width");
-  const customHeight = searchParams.get("height");
+  const widthParam = searchParams.get("width");
+  const heightParam = searchParams.get("height");
 
   if (!user) {
     return NextResponse.json(
@@ -23,37 +26,44 @@ export async function GET(request: NextRequest) {
   }
 
   const stats = statsParam !== "false";
-  const cacheKey = customWidth && customHeight
-    ? `${user}:${theme}:${stats}:custom:${customWidth}x${customHeight}:${shape}`
-    : `${user}:${theme}:${stats}:${device}:${shape}`;
 
-  try {
-    let png = getCached(cacheKey);
-    if (!png) {
-      const calendar = await fetchContributions(user);
-      if (customWidth && customHeight) {
-        png = renderWallpaper(calendar, {
-          theme, stats, user, shape,
-          customWidth: parseInt(customWidth),
-          customHeight: parseInt(customHeight),
-        });
-      } else {
-        png = renderWallpaper(calendar, { theme, device, stats, user, shape });
-      }
-      setCache(cacheKey, png);
+  // If either dimension is supplied we treat it as a custom-size request and
+  // require both to be valid, positive, bounded integers. This rejects garbage
+  // (NaN → would otherwise silently fall back to an iPhone canvas) and caps the
+  // allocation size instead of trusting the URL.
+  if (widthParam !== null || heightParam !== null) {
+    const customWidth = Number(widthParam);
+    const customHeight = Number(heightParam);
+    if (
+      !Number.isInteger(customWidth) ||
+      !Number.isInteger(customHeight) ||
+      customWidth < 1 ||
+      customHeight < 1 ||
+      customWidth > MAX_DIMENSION ||
+      customHeight > MAX_DIMENSION
+    ) {
+      return NextResponse.json(
+        {
+          error: `width and height must be integers between 1 and ${MAX_DIMENSION}`,
+        },
+        { status: 400 }
+      );
     }
 
-    return new NextResponse(new Uint8Array(png), {
-      headers: {
-        "Content-Type": "image/png",
-        "Cache-Control": "public, max-age=300",
-        "Content-Length": String(png.length),
-      },
-    });
-  } catch (err: unknown) {
-    const status = err instanceof GitHubError ? err.status : 500;
-    const message = err instanceof Error ? err.message : "Unknown error";
-    console.error(`Error generating wallpaper for ${user}:`, message);
-    return NextResponse.json({ error: message }, { status });
+    const cacheKey = `${user}:${theme}:${stats}:custom:${customWidth}x${customHeight}:${shape}`;
+    return buildWallpaperResponse(
+      user,
+      cacheKey,
+      { theme, stats, user, shape, customWidth, customHeight },
+      "wallpaper"
+    );
   }
+
+  const cacheKey = `${user}:${theme}:${stats}:${device}:${shape}`;
+  return buildWallpaperResponse(
+    user,
+    cacheKey,
+    { theme, device, stats, user, shape },
+    "wallpaper"
+  );
 }
