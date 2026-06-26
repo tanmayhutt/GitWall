@@ -1,3 +1,5 @@
+import type { MinecraftVariant } from "./lib/minecraft";
+
 export interface Theme {
   name: string;
   background: string;
@@ -5,6 +7,11 @@ export interface Theme {
   levels: [string, string, string, string];
   text: string;
   subtext: string;
+  // When set, cells are drawn as pixel-art Minecraft blocks of this variant
+  // instead of plain boxes/circles. `empty`/`levels` are then only used for the
+  // theme-picker swatch, not the render itself.
+  style?: "minecraft";
+  variant?: MinecraftVariant;
 }
 
 export const THEMES: Record<string, Theme> = {
@@ -107,6 +114,50 @@ export const THEMES: Record<string, Theme> = {
     levels: ["#f4c430", "#ff9933", "#ff7722", "#ff671f"],
     text: "#fff3e0",
     subtext: "#e0b483",
+  },
+
+  // ── Minecraft styles ──────────────────────────────────────────────────────
+  // Cells render as pixel-art blocks (see src/lib/minecraft.ts). `empty`/`levels`
+  // here only feed the theme-picker swatch. Slime is the default Minecraft style.
+  "minecraft-slime": {
+    name: "Slime",
+    style: "minecraft",
+    variant: "slime",
+    background: "#10160e",
+    empty: "#2b3326",
+    levels: ["#4a7a35", "#5fa53f", "#74c24a", "#8ce05a"],
+    text: "#e3f3da",
+    subtext: "#7c9c66",
+  },
+  "minecraft-emerald": {
+    name: "Emerald Ore",
+    style: "minecraft",
+    variant: "emerald",
+    background: "#16191d",
+    empty: "#7e7e7e",
+    levels: ["#1c9e54", "#2cb262", "#34d878", "#7df0a8"],
+    text: "#eaf6ee",
+    subtext: "#7f9587",
+  },
+  "minecraft-chest": {
+    name: "Loot Chest",
+    style: "minecraft",
+    variant: "chest",
+    background: "#1b1712",
+    empty: "#8a8a8a",
+    levels: ["#9c6b35", "#b7843f", "#f4c430", "#34d878"],
+    text: "#f3e9d8",
+    subtext: "#9c8b70",
+  },
+  "minecraft-grass": {
+    name: "Grass & Trees",
+    style: "minecraft",
+    variant: "grass",
+    background: "#12150e",
+    empty: "#7a5536",
+    levels: ["#5aa83e", "#4a8c2c", "#3f8f2c", "#2c6e1e"],
+    text: "#e9f3dc",
+    subtext: "#8a9c70",
   },
 };
 
