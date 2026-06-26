@@ -4,7 +4,7 @@ Turn your GitHub contribution graph into a phone wallpaper.
 
 ## Features
 
-- Generates retina-quality wallpapers from your GitHub contributions
+- Generates retina-quality wallpapers from your GitHub contributions.
 - 11 themes — Classic, Light, Dracula, Nord, Ocean, Sunset, Mono, Catppuccin, Gruvbox, Rosé Pine, Synthwave
 - Box or circular cell shapes
 - **iPhone** support: iPhone 14 through 17 Pro Max (and iPhone Air)
