@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { fetchContributions } from "@/github";
+import { fetchContributions, GitHubError } from "@/github";
 import { renderWallpaper } from "@/render";
 import { getCached, setCache } from "@/lib/cache";
 
@@ -8,6 +8,7 @@ export async function GET(request: NextRequest) {
   const user = searchParams.get("user");
   const theme = searchParams.get("theme") || "classic";
   const statsParam = searchParams.get("stats");
+  const shape = searchParams.get("shape") === "circle" ? "circle" : "box";
 
   if (!user) {
     return NextResponse.json(
@@ -17,7 +18,7 @@ export async function GET(request: NextRequest) {
   }
 
   const stats = statsParam !== "false";
-  const cacheKey = `preview:${user}:${theme}:${stats}`;
+  const cacheKey = `preview:${user}:${theme}:${stats}:${shape}`;
 
   try {
     let png = getCached(cacheKey);
@@ -28,6 +29,7 @@ export async function GET(request: NextRequest) {
         device: "preview",
         stats,
         user,
+        shape,
       });
       setCache(cacheKey, png);
     }
@@ -40,8 +42,9 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (err: unknown) {
+    const status = err instanceof GitHubError ? err.status : 500;
     const message = err instanceof Error ? err.message : "Unknown error";
     console.error(`Error generating preview for ${user}:`, message);
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: message }, { status });
   }
 }

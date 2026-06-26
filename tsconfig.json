@@ -19,11 +19,7 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"],
-      "@/github": ["./src/github"],
-      "@/render": ["./src/render"],
-      "@/themes": ["./src/themes"],
-      "@/devices": ["./src/devices"]
+      "@/*": ["./src/*"]
     }
   },
   "include": [

@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Nunito_Sans } from "next/font/google";
+import { Plus_Jakarta_Sans, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 
-const nunitoSans = Nunito_Sans({ variable: "--font-sans" });
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const jakarta = Plus_Jakarta_Sans({
+  variable: "--font-sans",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
 });
 
 const geistMono = Geist_Mono({
@@ -15,10 +14,30 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const title = "GitWall — GitHub Contribution Wallpapers for iPhone";
+const description =
+  "Generate iPhone wallpapers from your GitHub contribution graph, with auto-updating lock screen support via iOS Shortcuts.";
+
 export const metadata: Metadata = {
-  title: "GitWall — GitHub Contribution Wallpapers for iPhone",
-  description:
-    "Generate iPhone wallpapers from your GitHub contribution graph",
+  title,
+  description,
+  keywords: [
+    "github",
+    "contribution graph",
+    "iphone wallpaper",
+    "ios shortcuts",
+    "lock screen",
+  ],
+  openGraph: {
+    title,
+    description,
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title,
+    description,
+  },
 };
 
 export default function RootLayout({
@@ -27,9 +46,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={cn("dark font-sans", nunitoSans.variable)}>
+    <html lang="en" className={cn("dark font-sans", jakarta.variable)}>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistMono.variable} antialiased`}
+        suppressHydrationWarning
       >
         {children}
       </body>

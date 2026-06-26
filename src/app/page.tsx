@@ -1,15 +1,14 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
-import { Plus_Jakarta_Sans } from "next/font/google";
-import { Download, Loader2, ChevronRight, Smartphone, Search, X } from "lucide-react";
+import { Download, Loader2, ChevronRight, Smartphone, Square, Circle, Search, X } from "lucide-react";
 
-const jakarta = Plus_Jakarta_Sans({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
-});
+type Theme = { id: string; name: string; colors: string[]; background: string };
+type Device = { id: string; name: string };
 
-const themes = [
+// Instant-render fallbacks; the live lists are fetched from the API on mount so
+// new themes/devices added server-side appear without touching this file.
+const FALLBACK_THEMES: Theme[] = [
   { id: "classic", name: "Classic", colors: ["#023A16", "#196E2D", "#2CA044", "#39d353"], background: "#0C1116" },
   { id: "light", name: "Light", colors: ["#9be9a8", "#40c463", "#30a14e", "#216e39"], background: "#ffffff" },
   { id: "dracula", name: "Dracula", colors: ["#6272a4", "#bd93f9", "#ff79c6", "#50fa7b"], background: "#282a36" },
@@ -17,9 +16,9 @@ const themes = [
   { id: "ocean", name: "Ocean", colors: ["#1d3461", "#1f5f8b", "#00b4d8", "#90e0ef"], background: "#0a192f" },
   { id: "sunset", name: "Sunset", colors: ["#e94560", "#f27121", "#e9724c", "#ffc857"], background: "#1a1a2e" },
   { id: "mono", name: "Mono", colors: ["#404040", "#737373", "#a6a6a6", "#d9d9d9"], background: "#000000" },
-] as const;
+];
 
-const iphoneDevices = [
+const FALLBACK_DEVICES: Device[] = [
   { id: "iphone14", name: "iPhone 14" },
   { id: "iphone14pro", name: "iPhone 14 Pro" },
   { id: "iphone14promax", name: "iPhone 14 Pro Max" },
@@ -29,7 +28,11 @@ const iphoneDevices = [
   { id: "iphone16", name: "iPhone 16" },
   { id: "iphone16pro", name: "iPhone 16 Pro" },
   { id: "iphone16promax", name: "iPhone 16 Pro Max" },
-] as const;
+  { id: "iphoneair", name: "iPhone Air" },
+  { id: "iphone17", name: "iPhone 17" },
+  { id: "iphone17pro", name: "iPhone 17 Pro" },
+  { id: "iphone17promax", name: "iPhone 17 Pro Max" },
+];
 
 type AndroidDevice = {
   id: string;
@@ -153,6 +156,7 @@ export default function Home() {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const [showStats, setShowStats] = useState("true");
+  const [shape, setShape] = useState("box");
   const [previewSrc, setPreviewSrc] = useState<string | null>(null);
   const [wallpaperUrl, setWallpaperUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -160,6 +164,27 @@ export default function Home() {
   const [copied, setCopied] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
   const [autoDetected, setAutoDetected] = useState(false);
+  const [themes, setThemes] = useState<Theme[]>(FALLBACK_THEMES);
+  const [devices, setDevices] = useState<Device[]>(FALLBACK_DEVICES);
+
+  useEffect(() => {
+    let active = true;
+    Promise.all([
+      fetch("/api/themes").then((r) => r.json()),
+      fetch("/api/devices").then((r) => r.json()),
+    ])
+      .then(([t, d]: [Theme[], Device[]]) => {
+        if (!active) return;
+        if (Array.isArray(t) && t.length) setThemes(t);
+        if (Array.isArray(d) && d.length) setDevices(d);
+      })
+      .catch(() => {
+        /* keep fallbacks if the API is unreachable */
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   // Auto-detect device
   useEffect(() => {
@@ -184,6 +209,7 @@ export default function Home() {
         "390x844": "iphone14",
         "393x852": "iphone16",
         "402x874": "iphone16pro",
+        "420x912": "iphoneair",
         "430x932": "iphone15promax",
         "440x956": "iphone16promax",
       };
@@ -228,9 +254,12 @@ export default function Home() {
     }
     setError(null);
     setLoading(true);
-    setPreviewSrc(null);
+    setPreviewSrc((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return null;
+    });
 
-    const previewParams = new URLSearchParams({ user, theme: selectedTheme, stats: showStats });
+    const previewParams = new URLSearchParams({ user, theme: selectedTheme, stats: showStats, shape });
     const previewUrl = `/api/preview?${previewParams}`;
 
     let fullUrl: string;
@@ -239,14 +268,16 @@ export default function Home() {
         user,
         theme: selectedTheme,
         stats: showStats,
+        shape,
         width: String(androidDevice.width),
         height: String(androidDevice.height),
       });
       fullUrl = `${window.location.origin}/api/wallpaper?${params}`;
     } else {
-      const params = new URLSearchParams({ user, theme: selectedTheme, stats: showStats, device: iphoneDevice });
+      const params = new URLSearchParams({ user, theme: selectedTheme, stats: showStats, shape, device: iphoneDevice });
       fullUrl = `${window.location.origin}/api/wallpaper?${params}`;
     }
+
 
     try {
       const res = await fetch(previewUrl);
@@ -263,7 +294,32 @@ export default function Home() {
     } finally {
       setLoading(false);
     }
-  }, [username, selectedTheme, iphoneDevice, androidDevice, platform, showStats]);
+  }, [username, selectedTheme, iphoneDevice, androidDevice, platform, showStats, shape]);
+
+  const generateRef = useRef(generate);
+  const usernameRef = useRef(username);
+  useEffect(() => {
+    generateRef.current = generate;
+    usernameRef.current = username;
+  }, [generate, username]);
+
+  useEffect(() => {
+    if (!usernameRef.current.trim()) return;
+    const id = setTimeout(() => generateRef.current(), 200);
+    return () => clearTimeout(id);
+  }, [selectedTheme, iphoneDevice, androidDevice, platform, showStats, shape]);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("gitwall:username");
+    if (saved) setUsername(saved);
+  }, []);
+  useEffect(() => {
+    if (username.trim()) {
+      localStorage.setItem("gitwall:username", username.trim());
+    } else {
+      localStorage.removeItem("gitwall:username");
+    }
+  }, [username]);
 
   const handleCopy = useCallback(() => {
     if (wallpaperUrl) {
@@ -285,7 +341,7 @@ export default function Home() {
   const steps = platform === "android" ? androidSteps : iosSteps;
 
   return (
-    <div className={`min-h-screen bg-[#0a0a0a] text-white ${jakarta.className}`}>
+    <div className="min-h-screen bg-[#0a0a0a] text-white">
       <div className="mx-auto max-w-[1060px] px-6">
 
         {/* Hero */}
@@ -307,11 +363,12 @@ export default function Home() {
 
             {/* Username */}
             <div>
-              <label className="block text-[11px] font-semibold text-white/35 uppercase tracking-widest mb-3">
+              <label htmlFor="gh-username" className="block text-[11px] font-semibold text-white/35 uppercase tracking-widest mb-3">
                 GitHub Username
               </label>
               <div className="flex gap-2.5">
                 <input
+                  id="gh-username"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && generate()}
@@ -381,18 +438,19 @@ export default function Home() {
               <div className="grid grid-cols-2 gap-4 mb-7">
                 {/* Device selector */}
                 <div>
-                  <label className="block text-[11px] font-semibold text-white/35 uppercase tracking-widest mb-2.5">
+                  <label htmlFor="device-select" className="block text-[11px] font-semibold text-white/35 uppercase tracking-widest mb-2.5">
                     Device{autoDetected && <span className="text-white/25 normal-case tracking-normal font-normal ml-1.5">· auto-detected</span>}
                   </label>
 
                   {platform === "iphone" ? (
                     <div className="relative">
                       <select
+                        id="device-select"
                         value={iphoneDevice}
                         onChange={(e) => setIphoneDevice(e.target.value)}
                         className="w-full bg-white/[0.04] border border-white/[0.08] rounded-lg px-3.5 py-2.5 text-[13px] text-white focus:outline-none focus:border-white/25 transition-colors cursor-pointer appearance-none font-medium"
                       >
-                        {iphoneDevices.map((d) => (
+                        {devices.map((d) => (
                           <option key={d.id} value={d.id} className="bg-[#111] text-white">
                             {d.name}
                           </option>
@@ -470,6 +528,34 @@ export default function Home() {
                 </div>
               </div>
 
+              {/* Shape */}
+              <div className="mb-7">
+                <label className="block text-[11px] font-semibold text-white/35 uppercase tracking-widest mb-2.5">
+                  Shape
+                </label>
+                <div className="inline-flex gap-1 p-1 bg-white/[0.04] border border-white/[0.08] rounded-lg">
+                  {[
+                    { id: "box", name: "Box", Icon: Square },
+                    { id: "circle", name: "Circular", Icon: Circle },
+                  ].map(({ id, name, Icon }) => (
+                    <button
+                      key={id}
+                      onClick={() => setShape(id)}
+                      aria-pressed={shape === id}
+                      aria-label={`${name} cells`}
+                      className={`flex items-center gap-1.5 px-4 py-2 rounded-md text-[12px] font-semibold transition-colors cursor-pointer ${
+                        shape === id
+                          ? "bg-white text-black"
+                          : "text-white/50 hover:text-white"
+                      }`}
+                    >
+                      <Icon className="size-3.5" />
+                      {name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               {/* Theme */}
               <div>
                 <label className="block text-[11px] font-semibold text-white/35 uppercase tracking-widest mb-3">
@@ -480,6 +566,8 @@ export default function Home() {
                     <button
                       key={t.id}
                       onClick={() => setSelectedTheme(t.id)}
+                      aria-pressed={selectedTheme === t.id}
+                      aria-label={`${t.name} theme`}
                       className={`px-3.5 py-2.5 rounded-lg border transition-all cursor-pointer ${
                         selectedTheme === t.id
                           ? "border-white/50 ring-1 ring-white/10"
@@ -534,6 +622,7 @@ export default function Home() {
                   <button
                     onClick={handleCopy}
                     disabled={!wallpaperUrl}
+                    aria-label="Copy shortcut URL"
                     className="border border-white/[0.12] rounded-lg px-5 text-[13px] font-semibold text-white/50 hover:text-white hover:border-white/30 transition-colors disabled:opacity-20 disabled:cursor-not-allowed"
                   >
                     {copied ? "✓" : "Copy"}
@@ -597,6 +686,7 @@ export default function Home() {
                   </div>
                 )}
                 {previewSrc && (
+                  // eslint-disable-next-line @next/next/no-img-element
                   <img src={previewSrc} alt="Wallpaper preview" className="w-full h-full object-cover" />
                 )}
               </div>
@@ -625,6 +715,7 @@ export default function Home() {
                   </div>
                 )}
                 {previewSrc && (
+                  // eslint-disable-next-line @next/next/no-img-element
                   <img src={previewSrc} alt="Wallpaper preview" className="w-full h-full object-cover" />
                 )}
               </div>

@@ -1,22 +1,39 @@
-const { createCanvas, registerFont } = require("canvas");
-const { getTheme } = require("./themes");
-const { getDevice } = require("./devices");
-const path = require("path");
+import { createCanvas, registerFont, type CanvasRenderingContext2D } from "canvas";
+import path from "path";
+import { getTheme } from "./themes";
+import { getDevice } from "./devices";
+import { getContributionLevel, calculateStreak } from "./lib/contributions";
+import type { ContributionCalendar } from "./github";
 
 const fontsDir = path.join(process.cwd(), "fonts");
 registerFont(path.join(fontsDir, "Inter-Regular.ttf"), { family: "Inter" });
 registerFont(path.join(fontsDir, "Inter-Bold.ttf"), { family: "Inter", weight: "bold" });
 
-function getContributionLevel(count) {
-  if (count === 0) return -1;
-  if (count <= 3) return 0;
-  if (count <= 6) return 1;
-  if (count <= 9) return 2;
-  return 3;
+export type CellShape = "box" | "circle";
+
+export interface RenderOptions {
+  theme?: string;
+  device?: string;
+  stats?: boolean;
+  user?: string;
+  shape?: CellShape;
+  customWidth?: number;
+  customHeight?: number;
 }
 
-function renderWallpaper(calendar, options = {}) {
-  const { theme: themeName = "classic", device: deviceName = "iphone14", stats = true, user = "", customWidth, customHeight } = options;
+export function renderWallpaper(
+  calendar: ContributionCalendar,
+  options: RenderOptions = {}
+): Buffer {
+  const {
+    theme: themeName = "classic",
+    device: deviceName = "iphone14",
+    stats = true,
+    user = "",
+    shape = "box",
+    customWidth,
+    customHeight,
+  } = options;
 
   const theme = getTheme(themeName);
   let width, height;
@@ -85,7 +102,7 @@ function renderWallpaper(calendar, options = {}) {
     const y = gridTop + row * cellStep;
     const level = getContributionLevel(recentDays[i].contributionCount);
     ctx.fillStyle = level === -1 ? theme.empty : theme.levels[level];
-    roundRect(ctx, x, y, cellSize, cellSize, cornerRadius);
+    drawCell(ctx, x, y, cellSize, cornerRadius, shape);
   }
 
   // Bottom text — minimal, centered
@@ -123,35 +140,20 @@ function renderWallpaper(calendar, options = {}) {
   return canvas.toBuffer("image/png");
 }
 
-function calculateStreak(weeks) {
-  const allDays = [];
-  for (let w = weeks.length - 1; w >= 0; w--) {
-    const days = weeks[w].contributionDays;
-    for (let d = days.length - 1; d >= 0; d--) {
-      allDays.push(days[d]);
-    }
-  }
-
-  let start = 0;
-  if (allDays.length > 0 && allDays[0].contributionCount === 0) {
-    start = 1;
-  }
-
-  let streak = 0;
-  for (let i = start; i < allDays.length; i++) {
-    if (allDays[i].contributionCount > 0) {
-      streak++;
-    } else {
-      break;
-    }
-  }
-  return streak;
-}
-
-function roundRect(ctx, x, y, w, h, r) {
+function drawCell(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  size: number,
+  radius: number,
+  shape: CellShape
+) {
   ctx.beginPath();
-  ctx.roundRect(x, y, w, h, r);
+  if (shape === "circle") {
+    const r = size / 2;
+    ctx.arc(x + r, y + r, r, 0, Math.PI * 2);
+  } else {
+    ctx.roundRect(x, y, size, size, radius);
+  }
   ctx.fill();
 }
-
-module.exports = { renderWallpaper };

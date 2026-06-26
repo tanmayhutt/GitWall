@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { fetchContributions } from "@/github";
+import { fetchContributions, GitHubError } from "@/github";
 import { renderWallpaper } from "@/render";
 import { getCached, setCache } from "@/lib/cache";
 
@@ -9,6 +9,7 @@ export async function GET(request: NextRequest) {
   const theme = searchParams.get("theme") || "classic";
   const statsParam = searchParams.get("stats");
   const device = searchParams.get("device") || "iphone14";
+  const shape = searchParams.get("shape") === "circle" ? "circle" : "box";
 
   // Custom width/height override (for Android devices)
   const customWidth = searchParams.get("width");
@@ -23,21 +24,22 @@ export async function GET(request: NextRequest) {
 
   const stats = statsParam !== "false";
   const cacheKey = customWidth && customHeight
-    ? `${user}:${theme}:${stats}:custom:${customWidth}x${customHeight}`
-    : `${user}:${theme}:${stats}:${device}`;
+    ? `${user}:${theme}:${stats}:custom:${customWidth}x${customHeight}:${shape}`
+    : `${user}:${theme}:${stats}:${device}:${shape}`;
 
   try {
     let png = getCached(cacheKey);
     if (!png) {
       const calendar = await fetchContributions(user);
-      const renderOptions: Record<string, unknown> = { theme, stats, user };
       if (customWidth && customHeight) {
-        renderOptions.customWidth = parseInt(customWidth);
-        renderOptions.customHeight = parseInt(customHeight);
+        png = renderWallpaper(calendar, {
+          theme, stats, user, shape,
+          customWidth: parseInt(customWidth),
+          customHeight: parseInt(customHeight),
+        });
       } else {
-        renderOptions.device = device;
+        png = renderWallpaper(calendar, { theme, device, stats, user, shape });
       }
-      png = renderWallpaper(calendar, renderOptions);
       setCache(cacheKey, png);
     }
 
@@ -49,8 +51,9 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (err: unknown) {
+    const status = err instanceof GitHubError ? err.status : 500;
     const message = err instanceof Error ? err.message : "Unknown error";
     console.error(`Error generating wallpaper for ${user}:`, message);
-    return NextResponse.json({ error: message }, { status: 500 });
+    return NextResponse.json({ error: message }, { status });
   }
 }

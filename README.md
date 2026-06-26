@@ -5,8 +5,9 @@ Turn your GitHub contribution graph into a phone wallpaper.
 ## Features
 
 - Generates retina-quality wallpapers from your GitHub contributions
-- 7 themes — Classic, Light, Dracula, Nord, Ocean, Sunset, Mono
-- **iPhone** support: iPhone 14 through 16 Pro Max
+- 11 themes — Classic, Light, Dracula, Nord, Ocean, Sunset, Mono, Catppuccin, Gruvbox, Rosé Pine, Synthwave
+- Box or circular cell shapes
+- **iPhone** support: iPhone 14 through 17 Pro Max (and iPhone Air)
 - **Android** support: 70+ devices across Samsung, Google Pixel, OnePlus, Xiaomi, Nothing, Motorola, Sony, ASUS, OPPO, vivo, Realme, and Honor
 - Shows contribution stats: total count and current streak
 - iOS Shortcut-compatible URL for daily auto-updating wallpapers (iPhone)
@@ -16,23 +17,31 @@ Turn your GitHub contribution graph into a phone wallpaper.
 ## Setup
 
 ```bash
-git clone https://github.com/sxivansx/GitWall.git
+git clone https://github.com/govindup63/GitWall.git
 cd GitWall
 npm install
 ```
 
-Create a `.env` file:
+Create a `.env` file in the project root:
 
 ```
 GITHUB_TOKEN=your_github_personal_access_token
-PORT=3000
 ```
 
-The token needs the `read:user` scope. [Create one here](https://github.com/settings/tokens).
+A token with the `read:user` scope works. [Create one here](https://github.com/settings/tokens). Next.js loads `.env` automatically.
 
 ## Usage
 
+For development:
+
 ```bash
+npm run dev
+```
+
+For production:
+
+```bash
+npm run build
 npm start
 ```
 
@@ -42,15 +51,16 @@ Open `http://localhost:3000`, enter a GitHub username, pick your platform (iPhon
 
 | Endpoint | Description |
 |---|---|
-| `GET /wallpaper?user=<username>` | Full-resolution wallpaper PNG (iPhone) |
-| `GET /wallpaper?user=<username>&width=1440&height=3120` | Full-resolution wallpaper PNG (Android) |
-| `GET /preview?user=<username>` | Low-res preview |
+| `GET /api/wallpaper?user=<username>` | Full-resolution wallpaper PNG (iPhone) |
+| `GET /api/wallpaper?user=<username>&width=1440&height=3120` | Full-resolution wallpaper PNG (Android) |
+| `GET /api/preview?user=<username>` | Low-res preview PNG |
 | `GET /api/themes` | List available themes |
 | `GET /api/devices` | List supported iPhone devices |
-| `GET /api/android-devices` | List supported Android devices |
-| `GET /health` | Server health check |
+| `GET /api/health` | Server health check |
 
-**Wallpaper query params:** `user` (required), `theme`, `stats` (true/false), `device` (iPhone), `width` + `height` (Android)
+**Wallpaper query params:** `user` (required), `theme`, `device` (iPhone), `width` + `height` (Android), `stats` (true/false), `shape` (box/circle)
+
+The API returns proper status codes: `400` for a missing or malformed username, `404` for a user that does not exist, `429` when GitHub rate-limits the request, and `500` for server-side issues.
 
 ### Auto-Updating Wallpaper
 
@@ -73,7 +83,7 @@ Open `http://localhost:3000`, enter a GitHub username, pick your platform (iPhon
 
 ## Tech Stack
 
-- **Next.js** — Frontend + API routes
+- **Next.js** (App Router) — HTTP server and frontend
 - **node-canvas** — Server-side PNG rendering
 - **GitHub GraphQL API** — Contribution data
 
