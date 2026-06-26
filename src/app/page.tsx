@@ -346,6 +346,7 @@ export default function Home() {
   const minecraftSelected = isMinecraftId(selectedTheme);
   const minecraftGroup = minecraftThemes.find((t) => t.id === MINECRAFT_DEFAULT) ?? minecraftThemes[0];
 
+
   const iphoneGuide = (
     <div className="space-y-3">
       <StepCard num="1" title="Generate">
@@ -728,6 +729,30 @@ export default function Home() {
                       })}
                     </div>
                   </div>
+                )}
+              </div>
+
+              {/* Generate / Regenerate — below the theme picker */}
+              <div className="mt-8">
+                <button
+                  id="generate-btn"
+                  onClick={generate}
+                  disabled={loading}
+                  className="w-full py-3.5 bg-white text-black text-[14px] font-bold rounded-lg hover:bg-white/90 transition-colors disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {loading ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    `${hasGenerated ? "Regenerate" : "Generate"} →`
+                  )}
+                </button>
+                {isDirty && !loading && (
+                  <p className="text-amber-300/70 text-[12px] mt-2.5 text-center font-medium">
+                    Settings changed — regenerate to update your wallpaper.
+                  </p>
+                )}
+                {error && (
+                  <p className="text-red-400/80 text-[13px] mt-2.5 font-medium text-center">{error}</p>
                 )}
               </div>
 
