@@ -9,6 +9,9 @@ const fontsDir = path.join(process.cwd(), "fonts");
 registerFont(path.join(fontsDir, "Inter-Regular.ttf"), { family: "Inter" });
 registerFont(path.join(fontsDir, "Inter-Bold.ttf"), { family: "Inter", weight: "bold" });
 
+// The product's own domain, baked into every wallpaper as a watermark.
+export const WATERMARK = "gitwall.space";
+
 export type CellShape = "box" | "circle";
 
 export interface RenderOptions {
@@ -133,7 +136,7 @@ export function renderWallpaper(
   ctx.globalAlpha = 0.45;
   ctx.fillStyle = theme.subtext;
   ctx.font = `${Math.round(10 * scale)}px Inter`;
-  ctx.fillText("gitwall.dev", width / 2, height - Math.round(28 * scale));
+  ctx.fillText(WATERMARK, width / 2, height - Math.round(28 * scale));
   ctx.globalAlpha = 1;
   ctx.textAlign = "left";
 
