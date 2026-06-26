@@ -63,9 +63,6 @@ function StepCard({
     </div>
   );
 }
-    </div>
-  );
-}
 
 function SubStep({ num, children }: { num: string; children: ReactNode }) {
   return (
