@@ -10,6 +10,8 @@ import type { AttackOnTitanVariant } from "./lib/attackontitan";
 import { renderAotScene } from "./lib/aotScene";
 import { renderGotScene } from "./lib/gotScene";
 import { GAMEOFTHRONES_WORDS, type GameOfThronesVariant } from "./lib/gameofthrones";
+import { renderSpidermanScene } from "./lib/spidermanScene";
+import { type SpidermanVariant } from "./lib/spiderman";
 import { renderPbScene } from "./lib/pbScene";
 import { renderPokemonScene } from "./lib/pokemonScene";
 import { type PokemonVariant } from "./lib/pokemon";
@@ -122,6 +124,7 @@ export function renderWallpaper(
   // block edges stay crisp — it's restored before the text below.
   const isAttackOnTitan = theme.style === "attackontitan";
   const isGot = theme.style === "gameofthrones";
+  const isSpiderman = theme.style === "spiderman";
   const isPointBlank = theme.style === "pointblank";
   const isPokemon = theme.style === "pokemon";
 
@@ -139,6 +142,12 @@ export function renderWallpaper(
     renderGotScene(ctx, {
       width, height, gridLeft, gridTop, numCols, numRows, cellSize, cellStep,
       cornerRadius, levels, variant: theme.variant as GameOfThronesVariant,
+    });
+  } else if (isSpiderman) {
+    const levels = recentDays.map((d) => getContributionLevel(d.contributionCount));
+    renderSpidermanScene(ctx, {
+      width, height, gridLeft, gridTop, numCols, numRows, cellSize, cellStep,
+      cornerRadius, levels, variant: theme.variant as SpidermanVariant,
     });
   } else if (isPointBlank) {
     const levels = recentDays.map((d) => getContributionLevel(d.contributionCount));
