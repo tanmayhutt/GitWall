@@ -10,6 +10,8 @@ import type { AttackOnTitanVariant } from "./lib/attackontitan";
 import { renderAotScene } from "./lib/aotScene";
 import { renderGotScene } from "./lib/gotScene";
 import { GAMEOFTHRONES_WORDS, type GameOfThronesVariant } from "./lib/gameofthrones";
+import { renderPokemonScene } from "./lib/pokemonScene";
+import { type PokemonVariant } from "./lib/pokemon";
 import type { ContributionCalendar } from "./github";
 
 const fontsDir = path.join(process.cwd(), "fonts");
@@ -116,6 +118,7 @@ export function renderWallpaper(
   // block edges stay crisp — it's restored before the text below.
   const isAttackOnTitan = theme.style === "attackontitan";
   const isGot = theme.style === "gameofthrones";
+  const isPokemon = theme.style === "pokemon";
 
   if (isAttackOnTitan) {
     // Attack on Titan takes over the whole canvas: the grid becomes the Wall
@@ -131,6 +134,12 @@ export function renderWallpaper(
     renderGotScene(ctx, {
       width, height, gridLeft, gridTop, numCols, numRows, cellSize, cellStep,
       cornerRadius, levels, variant: theme.variant as GameOfThronesVariant,
+    });
+  } else if (isPokemon) {
+    const levels = recentDays.map((d) => getContributionLevel(d.contributionCount));
+    renderPokemonScene(ctx, {
+      width, height, gridLeft, gridTop, numCols, numRows, cellSize, cellStep,
+      cornerRadius, levels, variant: theme.variant as PokemonVariant,
     });
   } else {
     const isMinecraft = theme.style === "minecraft";
