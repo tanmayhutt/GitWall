@@ -49,7 +49,7 @@ export function renderBetterCallSaulScene(ctx: CanvasRenderingContext2D, a: Bett
 
   // Top Banner "IN LEGAL TROUBLE?"
   ctx.save();
-  ctx.translate(width / 2, height * 0.05);
+  ctx.translate(width / 2, height * 0.10); // Shifted down
   ctx.rotate(-5 * Math.PI / 180);
   ctx.fillStyle = TEXT_BLACK;
   ctx.fillRect(-150 * scale, -20 * scale, 300 * scale, 40 * scale);
@@ -68,7 +68,7 @@ export function renderBetterCallSaulScene(ctx: CanvasRenderingContext2D, a: Bett
     ctx.save();
     const tw = 280 * scale; // perfect size for the cleanly cropped logo
     const th = tw * (textImg.height / textImg.width);
-    ctx.drawImage(textImg, width / 2 - tw / 2, height * 0.11, tw, th);
+    ctx.drawImage(textImg, width / 2 - tw / 2, height * 0.16, tw, th); // Shifted down
     ctx.restore();
   } catch (e) {
     console.error("Missing bcs_text.png", e);
